@@ -1,0 +1,78 @@
+name: bmad-development
+displayName: "BMAD Development Cycle"
+description: "Execute BMAD development iterations: SM creates story → Dev implements → QA validates"
+version: "1.0.0"
+author: "BMAD-METHOD"
+
+triggers:
+  - "start development"
+  - "implement next story"
+  - "development cycle"
+
+capabilities:
+  - "Create user stories with Scrum Master"
+  - "Implement features with Developer"
+  - "Quality assurance with QA agent"
+  - "Iterate through epics"
+
+dependencies:
+  mcp_servers:
+    - bmad-method
+
+parameters:
+  epicName:
+    type: string
+    description: "Epic to work on"
+    required: false
+
+  storyId:
+    type: string
+    description: "Specific story ID to implement"
+    required: false
+
+  autoQa:
+    type: boolean
+    description: "Automatically run QA after implementation"
+    default: true
+
+workflow:
+  steps:
+    - id: "scrum-master"
+      name: "Create User Story"
+      description: "SM analyzes docs and creates next story"
+      agent: "sm"
+      inputs:
+        - "docs/prd.md"
+        - "docs/architecture.md"
+      outputs:
+        - "docs/stories/story-{storyId}.md"
+
+    - id: "developer"
+      name: "Implement Story"
+      description: "Dev implements the user story"
+      agent: "dev"
+      inputs:
+        - "docs/stories/story-{storyId}.md"
+      outputs:
+        - "code/**/*"
+        - "tests/**/*"
+
+    - id: "qa"
+      name: "Quality Assurance"
+      description: "QA validates implementation"
+      agent: "qa"
+      condition: "autoQa"
+      inputs:
+        - "code/**/*"
+        - "tests/**/*"
+        - "docs/stories/story-{storyId}.md"
+
+iterationMode: true
+maxIterations: 50
+
+outputFormat:
+  type: "code-and-docs"
+  locations:
+    code: "src/"
+    tests: "tests/"
+    stories: "docs/stories/"

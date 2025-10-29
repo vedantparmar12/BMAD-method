@@ -1,0 +1,83 @@
+name: bmad-planning
+displayName: "BMAD Planning Phase"
+description: "Execute the BMAD planning phase: Analyst → PM → Architect → PO"
+version: "1.0.0"
+author: "BMAD-METHOD"
+
+triggers:
+  - "start bmad planning"
+  - "create project plan"
+  - "planning phase"
+
+capabilities:
+  - "Create project brief with Analyst"
+  - "Generate PRD with PM"
+  - "Design architecture with Architect"
+  - "Validate documents with PO"
+
+dependencies:
+  mcp_servers:
+    - bmad-method
+
+parameters:
+  projectName:
+    type: string
+    description: "Name of the project"
+    required: true
+
+  projectType:
+    type: string
+    enum: ["greenfield", "brownfield", "enhancement"]
+    description: "Type of project"
+    required: true
+    default: "greenfield"
+
+  skipValidation:
+    type: boolean
+    description: "Skip PO validation step"
+    default: false
+
+workflow:
+  steps:
+    - id: "analyst"
+      name: "Analyst Phase"
+      description: "Create project brief"
+      agent: "analyst"
+      outputs:
+        - "docs/project-brief.md"
+
+    - id: "pm"
+      name: "PM Phase"
+      description: "Create PRD from brief"
+      agent: "pm"
+      inputs:
+        - "docs/project-brief.md"
+      outputs:
+        - "docs/prd.md"
+
+    - id: "architect"
+      name: "Architect Phase"
+      description: "Create architecture doc"
+      agent: "architect"
+      inputs:
+        - "docs/prd.md"
+      outputs:
+        - "docs/architecture.md"
+
+    - id: "po"
+      name: "PO Validation"
+      description: "Validate all planning documents"
+      agent: "po"
+      condition: "not skipValidation"
+      inputs:
+        - "docs/project-brief.md"
+        - "docs/prd.md"
+        - "docs/architecture.md"
+
+outputFormat:
+  type: "documents"
+  location: "docs/"
+  files:
+    - "project-brief.md"
+    - "prd.md"
+    - "architecture.md"
